@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# WireGuard keys — never commit private keys
+*.key
+*_private.key
+*private*
+
+# Scan output files (generated, not source)
+lab/task3_firewall/scan_results.txt
+
+# Backup configs
+configs_backup/
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Logs — screenshots capture these, not raw files
+*.log

@@ -1,0 +1,94 @@
+# docker-compose.yml — Luna Bags lab environment (DMZ + internal network)
+# Usage: from lab/: docker compose up -d
+# Two bridge networks mirror the real topology: DMZ (public-facing) and internal (business)
+
+services:
+  hostA:
+    container_name: hostA-10.9.0.5
+    image: ubuntu:22.04
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./shared:/shared
+      - ./hostA_entrypoint/start_apache.sh:/start_apache.sh:ro
+    entrypoint: ["/bin/bash", "/start_apache.sh"]
+    networks:
+      dmz:
+        ipv4_address: 10.9.0.5
+
+  seed-router:
+    container_name: seed-router
+    image: ubuntu:22.04
+    # privileged needed for iptables and WireGuard kernel operations
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./shared:/shared
+      - ./router_entrypoint/start_router.sh:/start_router.sh:ro
+    entrypoint: ["/bin/bash", "/start_router.sh"]
+    networks:
+      dmz:
+        ipv4_address: 10.9.0.11
+      internal:
+        ipv4_address: 192.168.60.11
+
+  host1:
+    container_name: host1-192.168.60.5
+    image: ubuntu:22.04
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      - net.ipv4.conf.all.accept_source_route=0
+    volumes:
+      - ./internal_host_entrypoint/start_services.sh:/start_services.sh:ro
+    entrypoint: ["/bin/bash", "/start_services.sh"]
+    networks:
+      internal:
+        ipv4_address: 192.168.60.5
+
+  host2:
+    container_name: host2-192.168.60.6
+    image: ubuntu:22.04
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      - net.ipv4.conf.all.accept_source_route=0
+    volumes:
+      - ./internal_host_entrypoint/start_services.sh:/start_services.sh:ro
+    entrypoint: ["/bin/bash", "/start_services.sh"]
+    networks:
+      internal:
+        ipv4_address: 192.168.60.6
+
+  host3:
+    container_name: host3-192.168.60.7
+    image: ubuntu:22.04
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      - net.ipv4.conf.all.accept_source_route=0
+    volumes:
+      - ./internal_host_entrypoint/start_services.sh:/start_services.sh:ro
+    entrypoint: ["/bin/bash", "/start_services.sh"]
+    networks:
+      internal:
+        ipv4_address: 192.168.60.7
+
+networks:
+  dmz:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.9.0.0/24
+          gateway: 10.9.0.1
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.60.0/24
+          gateway: 192.168.60.1
